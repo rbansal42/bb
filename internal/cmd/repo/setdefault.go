@@ -109,6 +109,11 @@ func runSetDefault(ctx context.Context, opts *SetDefaultOptions) error {
 		workspace = remote.Workspace
 		repoSlug = remote.RepoSlug
 
+		// Require TTY for interactive confirmation
+		if !opts.Streams.IsStdinTTY() {
+			return fmt.Errorf("cannot confirm: stdin is not a terminal\nProvide repository as argument: bb repo set-default <workspace/repo>")
+		}
+
 		// Confirm with user
 		fullRepo := fmt.Sprintf("%s/%s", workspace, repoSlug)
 		if !confirmSetDefault(opts.Streams, fullRepo) {

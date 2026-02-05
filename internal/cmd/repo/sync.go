@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os/exec"
 	"strings"
 	"time"
@@ -237,14 +238,16 @@ func resetToUpstream(remote, branch string) error {
 
 // confirmForceSync prompts the user to confirm force sync operation
 func confirmForceSync(in interface{}) bool {
-	reader, ok := in.(*bufio.Reader)
-	if !ok {
-		// Try to create a reader from io.Reader
-		if r, ok := in.(interface{ Read([]byte) (int, error) }); ok {
-			reader = bufio.NewReader(r)
-		} else {
-			return false
-		}
+	var reader *bufio.Reader
+
+	// Handle different input types
+	switch r := in.(type) {
+	case *bufio.Reader:
+		reader = r
+	case io.Reader:
+		reader = bufio.NewReader(r)
+	default:
+		return false
 	}
 
 	input, err := reader.ReadString('\n')

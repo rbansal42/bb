@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -179,22 +180,18 @@ func runCreate(opts *createOptions) error {
 
 // getDefaultWorkspace attempts to get the default workspace for the user
 func getDefaultWorkspace(ctx context.Context, client *api.Client, streams *iostreams.IOStreams) (string, error) {
-	// First, try to get from config
-	cfg, err := config.LoadConfig()
-	if err == nil && cfg.GitProtocol != "" {
-		// Check if there's a default workspace in hosts config
-		hosts, err := config.LoadHostsConfig()
-		if err == nil {
-			// Get active user's workspace (often same as username)
-			user := hosts.GetActiveUser(config.DefaultHost)
-			if user != "" {
-				// Try to use username as workspace (common pattern)
-				return user, nil
-			}
+	// First, try to get from hosts config (active user)
+	hosts, err := config.LoadHostsConfig()
+	if err == nil {
+		// Get active user's workspace (often same as username)
+		user := hosts.GetActiveUser(config.DefaultHost)
+		if user != "" {
+			// Try to use username as workspace (common pattern)
+			return user, nil
 		}
 	}
 
-	// Try to get current user and use their workspace
+	// Try to get current user from API and use their workspace
 	user, err := client.GetCurrentUser(ctx)
 	if err != nil {
 		return "", fmt.Errorf("could not get current user: %w", err)
@@ -211,7 +208,13 @@ func getDefaultWorkspace(ctx context.Context, client *api.Client, streams *iostr
 func promptForName(streams *iostreams.IOStreams) (string, error) {
 	fmt.Fprint(streams.Out, "Repository name: ")
 
-	reader := bufio.NewReader(os.Stdin)
+	var reader *bufio.Reader
+	if r, ok := streams.In.(io.Reader); ok {
+		reader = bufio.NewReader(r)
+	} else {
+		reader = bufio.NewReader(os.Stdin)
+	}
+
 	name, err := reader.ReadString('\n')
 	if err != nil {
 		return "", err
