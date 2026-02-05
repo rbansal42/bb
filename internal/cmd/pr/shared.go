@@ -50,6 +50,10 @@ func parseRepository(repoFlag string) (workspace, repoSlug string, err error) {
 		if len(parts) != 2 {
 			return "", "", fmt.Errorf("invalid repository format: %s (expected workspace/repo)", repoFlag)
 		}
+		// Validate both parts are non-empty
+		if parts[0] == "" || parts[1] == "" {
+			return "", "", fmt.Errorf("invalid repository format: %s (workspace and repo cannot be empty)", repoFlag)
+		}
 		return parts[0], parts[1], nil
 	}
 
@@ -71,6 +75,11 @@ func parsePRNumber(args []string) (int, error) {
 	prNum, err := strconv.Atoi(args[0])
 	if err != nil {
 		return 0, fmt.Errorf("invalid pull request number: %s", args[0])
+	}
+
+	// Validate positive PR number
+	if prNum <= 0 {
+		return 0, fmt.Errorf("invalid pull request number: must be a positive integer")
 	}
 
 	return prNum, nil

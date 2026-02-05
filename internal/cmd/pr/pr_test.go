@@ -44,8 +44,8 @@ func TestParsePRNumber(t *testing.T) {
 		{
 			name:    "negative number",
 			args:    []string{"-1"},
-			wantNum: -1,
-			wantErr: false, // strconv.Atoi accepts negative numbers
+			wantNum: 0,
+			wantErr: true, // negative PR numbers are invalid
 		},
 		{
 			name:    "mixed alphanumeric",
@@ -69,7 +69,7 @@ func TestParsePRNumber(t *testing.T) {
 			name:    "zero",
 			args:    []string{"0"},
 			wantNum: 0,
-			wantErr: false,
+			wantErr: true, // zero is not a valid PR number
 		},
 		{
 			name:    "whitespace",
@@ -145,16 +145,12 @@ func TestParseRepository(t *testing.T) {
 		{
 			name:     "empty workspace",
 			repoFlag: "/repo",
-			wantErr:  false, // will return empty workspace
-			wantWorkspace: "",
-			wantRepo: "repo",
+			wantErr:  true, // empty workspace is invalid
 		},
 		{
 			name:     "empty repo",
 			repoFlag: "workspace/",
-			wantErr:  false, // will return empty repo
-			wantWorkspace: "workspace",
-			wantRepo: "",
+			wantErr:  true, // empty repo is invalid
 		},
 		{
 			name:          "empty flag falls back to git detection",
